@@ -230,17 +230,17 @@ const Menu: React.FC<{
   useEffect(() => {
     try {
       fetchUserTokens();
-      checkSubscriptionStatus();
+      // checkSubscriptionStatus();
     } catch (e) {
       console.log("Error getting user data: ", e);
     }
   }, []);
 
   const doPrint = async () => {
-    if (numOfTokens < Number(TOKEN_COST.PRINT)) {
-      alert(`You need at least ${TOKEN_COST.PRINT} PPT token to print`);
-      return;
-    }
+    // if (numOfTokens < Number(TOKEN_COST.PRINT)) {
+    //   alert(`You need at least ${TOKEN_COST.PRINT} PPT token to print`);
+    //   return;
+    // }
 
     try {
       await updateTokenBalance('PRINT');
@@ -264,10 +264,10 @@ const Menu: React.FC<{
       return;
     }
 
-    if (numOfTokens < Number(TOKEN_COST.SAVE)) {
-      alert(`You need at least ${TOKEN_COST.SAVE} PPT token to save`);
-      return;
-    }
+    // if (numOfTokens < Number(TOKEN_COST.SAVE)) {
+    //   alert(`You need at least ${TOKEN_COST.SAVE} PPT token to save`);
+    //   return;
+    // }
 
     try {
       await updateTokenBalance('SAVE');
@@ -350,10 +350,10 @@ const Menu: React.FC<{
   };
 
   const sendEmail = async () => {
-    if (numOfTokens < Number(TOKEN_COST.EMAIL)) {
-        alert(`You need at least ${TOKEN_COST.EMAIL} PPT token to email the invoice`);
-        return;
-    }
+    // if (numOfTokens < Number(TOKEN_COST.EMAIL)) {
+    //     alert(`You need at least ${TOKEN_COST.EMAIL} PPT token to email the invoice`);
+    //     return;
+    // }
 
     try {
         await updateTokenBalance('EMAIL');
@@ -395,10 +395,10 @@ const Menu: React.FC<{
   };
 
   const exportAsHTML = async () => {
-    if (numOfTokens < Number(TOKEN_COST.EMAIL)) {
-        alert(`You need at least ${TOKEN_COST.EMAIL} PPT token to export the invoice`);
-        return;
-    }
+    // if (numOfTokens < Number(TOKEN_COST.EMAIL)) {
+    //     alert(`You need at least ${TOKEN_COST.EMAIL} PPT token to export the invoice`);
+    //     return;
+    // }
 
     try {
         await updateTokenBalance('EMAIL');
@@ -456,6 +456,7 @@ const Menu: React.FC<{
             text: "Save",
             icon: saveOutline,
             handler: async () => {
+              await checkSubscriptionStatus();
               if (numOfTokens >= Number(TOKEN_COST.SAVE)) {
                 await doSave();
               } else {
@@ -466,7 +467,8 @@ const Menu: React.FC<{
           {
             text: "Save As",
             icon: save,
-            handler: () => {
+            handler: async () => {
+              await checkSubscriptionStatus();
               if (numOfTokens >= Number(TOKEN_COST.SAVE_AS)) {
                 setShowAlert3(true);
               } else {
@@ -478,6 +480,7 @@ const Menu: React.FC<{
             text: "Print",
             icon: print,
             handler: async () => {
+              await checkSubscriptionStatus();
               if (numOfTokens >= Number(TOKEN_COST.PRINT)) {
                 await doPrint();
               } else {
@@ -489,6 +492,7 @@ const Menu: React.FC<{
             text: "Email",
             icon: mail,
             handler: async () => {
+              await checkSubscriptionStatus();
               if (numOfTokens >= Number(TOKEN_COST.EMAIL)) {
                 await sendEmail();
               } else {
@@ -500,6 +504,7 @@ const Menu: React.FC<{
             text: "Export as HTML",
             icon: download,
             handler: async () => {
+              await checkSubscriptionStatus();
               if (numOfTokens >= Number(TOKEN_COST.EMAIL)) {
                 await exportAsHTML();
               } else {
