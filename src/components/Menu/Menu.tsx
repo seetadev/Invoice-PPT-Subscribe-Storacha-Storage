@@ -211,9 +211,7 @@ const Menu: React.FC<{
         signer
       );
       
-      const tx = await contract.subscribe({
-        gasLimit: 300000
-      });
+      const tx = await contract.subscribe();
       
       await tx.wait();
       

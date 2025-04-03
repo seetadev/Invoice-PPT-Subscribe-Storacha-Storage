@@ -174,6 +174,37 @@ const Home: React.FC = () => {
     activateFooter(billType);
   }, [billType]);
 
+  useEffect(() => {
+    const switchToFilecoin = async () => {
+      if (!provider) return;
+      
+      try {
+        // Try to switch to Filecoin network
+        await provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: SUPPORTED_NETWORKS.FILECOIN.chainId }],
+        });
+      } catch (switchError: any) {
+        // This error code means the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          try {
+            await provider.request({
+              method: "wallet_addEthereumChain",
+              params: [SUPPORTED_NETWORKS.FILECOIN],
+            });
+          } catch (addError) {
+            console.error("Failed to add Filecoin network:", addError);
+          }
+        }
+        console.error("Failed to switch to Filecoin network:", switchError);
+      }
+    };
+
+    if (connected && provider) {
+      switchToFilecoin();
+    }
+  }, [provider, connected]);
+
   const connect = async () => {
     try {
       const accounts = await sdk?.connect();
