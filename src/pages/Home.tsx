@@ -166,7 +166,8 @@ const Home: React.FC = () => {
   useEffect(() => {
     const storedAccount = localStorage.getItem("connectedAccount");
     if (storedAccount) {
-      setAccount(storedAccount); // Set the retrieved account
+      setAccount(storedAccount);
+      // Don't automatically trigger connect() here
     }
   }, []);
 
@@ -174,15 +175,53 @@ const Home: React.FC = () => {
     activateFooter(billType);
   }, [billType]);
 
+  useEffect(() => {
+    const switchToFilecoin = async () => {
+      if (!provider) return;
+      
+      // Check if we've already set the network
+      const hasSetNetwork = localStorage.getItem("hasSetNetwork");
+      if (hasSetNetwork) return;
+
+      try {
+        // Try to switch to Filecoin network
+        await provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: SUPPORTED_NETWORKS.FILECOIN.chainId }],
+        });
+        // Mark that we've set the network
+        localStorage.setItem("hasSetNetwork", "true");
+      } catch (switchError: any) {
+        // This error code means the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          try {
+            await provider.request({
+              method: "wallet_addEthereumChain",
+              params: [SUPPORTED_NETWORKS.FILECOIN],
+            });
+            localStorage.setItem("hasSetNetwork", "true");
+          } catch (addError) {
+            console.error("Failed to add Filecoin network:", addError);
+          }
+        }
+        console.error("Failed to switch to Filecoin network:", switchError);
+      }
+    };
+
+    if (connected && provider && account) {
+      switchToFilecoin();
+    }
+  }, [provider, connected, account]);
+
   const connect = async () => {
     try {
       const accounts = await sdk?.connect();
       const account = accounts?.[0];
-      setAccount(account);
       if (account) {
+        setAccount(account);
         localStorage.setItem("connectedAccount", account);
+        await setNetwork();
       }
-      setNetwork();
     } catch (err) {
       console.warn("failed to connect..", err);
     }
@@ -193,6 +232,8 @@ const Home: React.FC = () => {
       await sdk?.disconnect();
       setAccount(undefined);
       localStorage.removeItem("connectedAccount"); // Clear the stored account
+      localStorage.removeItem("hasSetNetwork"); // Clear the network setting
+      setShowDisconnect({ open: false, event: undefined }); // Close the disconnect popover
     } catch (err) {
       console.warn("failed to disconnect..", err);
     }
@@ -275,7 +316,7 @@ const Home: React.FC = () => {
             slot="end"
             style={{ padding: 2 }}
             onClick={(e) => {
-              if (connected) {
+              if (connected && account) {
                 setShowDisconnect({ open: true, event: e.nativeEvent });
               } else {
                 connect();

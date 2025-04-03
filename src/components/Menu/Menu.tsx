@@ -17,6 +17,7 @@ import {
 } from "../../utils/constants";
 import meditokenabi from "../../utils/meditokenabi.json";
 import { create } from "@web3-storage/w3up-client";
+import { useSDK } from "@metamask/sdk-react";
 
 type EmailString = `${string}@${string}`;
 
@@ -38,7 +39,7 @@ const Menu: React.FC<{
   const [isUserSubscribed, setIsUserSubscribed] = useState(false);
   const [subscriptionEndDate, setSubscriptionEndDate] = useState<Date | null>(null);
   const [showSubscriptionAlert, setShowSubscriptionAlert] = useState(false);
-
+  const { sdk, connected, connecting, provider, chainId } = useSDK();
   /* Utility functions */
   const _validateName = async (filename) => {
     filename = filename.trim();
@@ -229,12 +230,13 @@ const Menu: React.FC<{
 
   useEffect(() => {
     try {
-      fetchUserTokens();
-      // checkSubscriptionStatus();
+      if(connected && provider ){
+        fetchUserTokens();
+      }
     } catch (e) {
       console.log("Error getting user data: ", e);
     }
-  }, []);
+  }, [provider, connected, chainId]);
 
   const doPrint = async () => {
     // if (numOfTokens < Number(TOKEN_COST.PRINT)) {
