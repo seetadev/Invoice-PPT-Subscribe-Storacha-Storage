@@ -37,7 +37,13 @@
     "react-router": "^5.3.4",
     "react-router-dom": "^5.3.4",
     "vite-plugin-commonjs": "^0.10.1",
-    "wagmi": "1.x"
+    "wagmi": "1.x",
+    "@storacha/client": "^1.2.8",
+    "@storacha/encrypt-upload-client": "^0.0.33",
+    "@lit-protocol/lit-node-client": "^7.1.2",
+    "@ucanto/core": "^10.3.1",
+    "@ucanto/principal": "^9.0.2",
+    "siwe": "^2.6.0"
   },
   "devDependencies": {
     "@capacitor/cli": "5.7.0",
@@ -59,7 +65,8 @@
     "typescript": "^5.1.6",
     "vite": "5.2.12",
     "vite-plugin-pwa": "^0.19.0",
-    "vitest": "^0.34.6"
+    "vitest": "^0.34.6",
+    "wrangler": "^4.13.2"
   },
   "description": "An Ionic project",
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"

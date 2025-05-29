@@ -18,6 +18,13 @@ import {
 import meditokenabi from "../../utils/meditokenabi.json";
 import { create } from "@web3-storage/w3up-client";
 import { useSDK } from "@metamask/sdk-react";
+import * as Client from '@storacha/client';
+import * as Signer from '@ucanto/principal/ed25519';
+import { DID } from '@ucanto/core';
+import { StoreMemory } from '@storacha/client/dist/stores/memory.js';
+import { create as createEncryptionClient } from '@storacha/encrypt-upload-client';
+import { NodeCryptoAdapter } from '@storacha/encrypt-upload-client/dist/crypto-adapters/node-crypto-adapter.js';
+import { getLitNodeClient } from '../../utils/lit';
 
 type EmailString = `${string}@${string}`;
 
@@ -122,19 +129,41 @@ const Menu: React.FC<{
       if (!savedEmail || !savedSpace) {
         throw new Error('IPFS account not set up. Please set up your IPFS account in the Files section first.');
       }
+
+      // Initialize Storacha client
+      const agentPk = import.meta.env.VITE_AGENT_PK || '';
+      if (!agentPk) throw new Error('Agent private key not set in VITE_AGENT_PK');
       
-      const client = await create();
-      const account = await client.login(savedEmail as EmailString);
-      // await client.setCurrentSpace(savedSpace);
+      const principal = Signer.parse(agentPk);
+      const store = new StoreMemory();
+      const serviceDID = DID.parse('did:web:web3.storage');
       
+      // Create client with simplified service configuration
+      const client = await Client.create({ 
+        principal, 
+        store,
+      });
+      
+      // Create encryption client
+      const encryptedClient = await createEncryptionClient({
+        storachaClient: client,
+        cryptoAdapter: new NodeCryptoAdapter(),
+        litClient: await getLitNodeClient(),
+      });
+
+      // Format the file data
       const formattedFile = new File(
         [JSON.stringify(fileData)],
         `${fileData.name}.json`,
         { type: 'application/json' }
       );
-      console.log(formattedFile);
-      const cid = await client.uploadDirectory([formattedFile]);
-      return cid.toString();
+
+      // Upload the file
+      const result = await encryptedClient.uploadEncryptedFile(
+        formattedFile,
+      );
+
+      return result.cid.toString();
     } catch (error) {
       console.error('IPFS Upload Error:', error);
       throw error;
