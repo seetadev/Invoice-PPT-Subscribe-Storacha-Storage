@@ -37,5 +37,18 @@ export default defineConfig({
     supported: {
       bigint: true,
     },
+  },
+  define: {
+    global: 'globalThis',
+  },
+  resolve: {
+    alias: {
+      process: "process/browser",
+      stream: "stream-browserify",
+      zlib: "browserify-zlib",
+      util: 'util',
+      buffer: 'buffer',
+      asset: 'assert',
+    },
   }
 });

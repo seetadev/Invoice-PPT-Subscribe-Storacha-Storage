@@ -24,6 +24,7 @@ import {
 } from "@ionic/react";
 import { fileTrayFull, trash, create, cloudDownload, cloudUpload, key } from "ionicons/icons";
 import { create as createClient } from "@web3-storage/w3up-client";
+import { decryptData } from '../../utils/lit';
 
 
 type DID = `did:${string}:${string}`;
@@ -242,18 +243,31 @@ const Files: React.FC<{
   const moveToLocalStorage = async (file) => {
     try {
       const fileData = await retrieveFromIPFS(file.cid, file.path);
-      console.log(fileData);
+      console.log('Retrieved encrypted file data:', fileData);
+      
+      // Decrypt the file data
+      const decryptedData = await decryptData(
+        fileData.ciphertext,
+        fileData.dataToEncryptHash,
+        fileData.accessControlConditions,
+        fileData.accessControlConditions[0].parameters[1] // spaceDid
+      );
+
+      console.log(decryptData);
+      
+      
+      console.log('Decrypted file data:', decryptedData);
       
       const localFile = FilesClass.create(
-        fileData.created,
-        fileData.modified,
-        fileData.content,
-        fileData.name,
-        fileData.billType
+        decryptedData.created,
+        decryptedData.modified,
+        decryptedData.content,
+        decryptedData.name,
+        decryptedData.billType
       );
       
       props.store._saveFile(localFile);
-      props.updateSelectedFile(fileData.name);
+      props.updateSelectedFile(decryptedData.name);
       return true;
     } catch (error) {
       console.error('Error moving file to localStorage:', error);

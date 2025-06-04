@@ -18,13 +18,7 @@ import {
 import meditokenabi from "../../utils/meditokenabi.json";
 import { create } from "@web3-storage/w3up-client";
 import { useSDK } from "@metamask/sdk-react";
-import * as Client from '@storacha/client';
-import * as Signer from '@ucanto/principal/ed25519';
-import { DID } from '@ucanto/core';
-import { StoreMemory } from '@storacha/client/dist/stores/memory.js';
-import { create as createEncryptionClient } from '@storacha/encrypt-upload-client';
-import { NodeCryptoAdapter } from '@storacha/encrypt-upload-client/dist/crypto-adapters/node-crypto-adapter.js';
-import { getLitNodeClient } from '../../utils/lit';
+import { encryptData } from '../../utils/lit';
 
 type EmailString = `${string}@${string}`;
 
@@ -129,41 +123,19 @@ const Menu: React.FC<{
       if (!savedEmail || !savedSpace) {
         throw new Error('IPFS account not set up. Please set up your IPFS account in the Files section first.');
       }
-
-      // Initialize Storacha client
-      const agentPk = import.meta.env.VITE_AGENT_PK || '';
-      if (!agentPk) throw new Error('Agent private key not set in VITE_AGENT_PK');
       
-      const principal = Signer.parse(agentPk);
-      const store = new StoreMemory();
-      const serviceDID = DID.parse('did:web:web3.storage');
+      const client = await create();
+      const account = await client.login(savedEmail as EmailString);
+      // await client.setCurrentSpace(savedSpace);
       
-      // Create client with simplified service configuration
-      const client = await Client.create({ 
-        principal, 
-        store,
-      });
-      
-      // Create encryption client
-      const encryptedClient = await createEncryptionClient({
-        storachaClient: client,
-        cryptoAdapter: new NodeCryptoAdapter(),
-        litClient: await getLitNodeClient(),
-      });
-
-      // Format the file data
       const formattedFile = new File(
         [JSON.stringify(fileData)],
         `${fileData.name}.json`,
         { type: 'application/json' }
       );
-
-      // Upload the file
-      const result = await encryptedClient.uploadEncryptedFile(
-        formattedFile,
-      );
-
-      return result.cid.toString();
+      console.log(formattedFile);
+      const cid = await client.uploadDirectory([formattedFile]);
+      return cid.toString();
     } catch (error) {
       console.error('IPFS Upload Error:', error);
       throw error;
@@ -322,25 +294,43 @@ const Menu: React.FC<{
   const doSaveAs = async (filename) => {
     if (!filename) return;
     
-    // if (numOfTokens < Number(TOKEN_COST.SAVE_AS)) {
-      //   alert(`You need at least ${TOKEN_COST.SAVE_AS} PPT token to save`);
-      //   return;
-      // }
-      
-      if (await _validateName(filename)) {
-        try {
-          const content = encodeURIComponent(AppGeneral.getSpreadsheetContent());
-          const fileData = {
+    if (await _validateName(filename)) {
+      try {
+        const content = encodeURIComponent(AppGeneral.getSpreadsheetContent());
+        const fileData = {
           name: filename,
           content: content,
           created: new Date().toString(),
           modified: new Date().toString(),
-          billType : props.bT
+          billType: props.bT
         };
         
         try {
-          // Upload to IPFS
-          const cid = await uploadToIPFS(fileData);
+          // Get the saved space DID from localStorage
+          const savedSpace = localStorage.getItem('ipfsUserSpace');
+          if (!savedSpace) {
+            throw new Error('IPFS space not set up. Please set up your IPFS account first.');
+          }
+
+          // Encrypt the file data using Lit Protocol
+          const { ciphertext, dataToEncryptHash, accessControlConditions } = await encryptData(
+            JSON.stringify(fileData),
+            savedSpace
+          );
+
+          // Create encrypted file data
+          const encryptedFileData = {
+            ciphertext,
+            dataToEncryptHash,
+            accessControlConditions,
+            name: filename,
+            created: new Date().toString(),
+            modified: new Date().toString(),
+            billType: props.bT
+          };
+
+          // Upload encrypted data to IPFS
+          const cid = await uploadToIPFS(encryptedFileData);
           await updateTokenBalance('SAVE_AS');
 
           // Save the CID reference locally
@@ -354,23 +344,10 @@ const Menu: React.FC<{
           props.store._saveFile(file);
           props.updateSelectedFile(filename);
           setShowAlert4(true);
-          window.alert(`File ${filename} saved successfully! IPFS CID: ${cid}`);
+          window.alert(`File ${filename} encrypted and saved successfully! IPFS CID: ${cid}`);
         } catch (ipfsError) {
           console.error('IPFS upload failed:', ipfsError);
-          
-          // // If IPFS upload fails, still save locally
-          // const file = new Files(
-          //   new Date().toString(),
-          //   new Date().toString(),
-          //   content,
-          //   filename,
-          //   props.bT,
-          //   cid
-          // );
-          // props.store._saveFile(file);
-          // props.updateSelectedFile(filename);
-          // setShowAlert4(true);
-          // window.alert(`File ${filename} saved locally. IPFS upload failed: ${ipfsError.message}`);
+          alert(`Failed to upload to IPFS: ${ipfsError.message}`);
         }
       } catch (error) {
         alert("Failed to process token payment");
