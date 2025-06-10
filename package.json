@@ -42,7 +42,7 @@
     "@lit-protocol/encryption": "^7.0.2",
     "@lit-protocol/constants": "^7.0.2",
     "@lit-protocol/types": "^7.0.2",
-    "siwe": "^2.6.0",
+    "siwe": "3.0.0",
     "buffer": "^6.0.3",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0",
