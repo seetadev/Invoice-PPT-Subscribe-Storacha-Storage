@@ -1,0 +1,17 @@
+./src/app-data.ts
+./src/vite-env.d.ts
+./src/App.tsx
+./src/main.tsx
+./src/utils/constants.ts
+./src/app-data-new.ts
+./src/components/socialcalc/index.js
+./src/components/socialcalc/aspiring/SocialCalc.js
+./src/components/NewFile/NewFile.tsx
+./src/components/Storage/LocalStorage.ts
+./src/components/Menu/Menu.tsx
+./src/components/Files/Files.tsx
+./src/pages/Home.tsx
+./pwa-assets.config.ts
+./vite.config.ts
+./.eslintrc.js
+./capacitor.config.ts
